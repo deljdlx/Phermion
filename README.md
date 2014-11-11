@@ -2,7 +2,7 @@
 
 #######registerAction($actionName, $callback, $callMethod=null, $httpMethod=null)
 Exemple
-
+```php
 $application=new Phermion();
 $application->registerAction(
 	'hello',
@@ -12,3 +12,4 @@ $application->registerAction(
 	,'http'
 	,'GET'
 );
+```
