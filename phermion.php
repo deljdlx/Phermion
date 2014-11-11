@@ -695,17 +695,6 @@ chdir(__DIR__);
 $application=new Phermion();
 
 
-
-$application->registerAction(
-	'hello',
-	function($param1, $param2='yolo') {
-		return $this->action_credit();
-	}
-	,'http'
-	,'GET'
-);
-$application->registerServiceProvider('http://192.168.1.96/___www/phermion/foo.php');
-
 echo $application->run();
 
 

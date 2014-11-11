@@ -7,7 +7,9 @@ By Julien Delsescaux
 PHP >= 5.4
 
 
-##Routing and actions
+##Routing
+
+##Actions
 
 ##Data storage
 
@@ -19,16 +21,23 @@ PHP >= 5.4
 
 
 ##Methods
-#######registerAction($actionName, $callback, $callMethod=null, $httpMethod=null)
+######registerAction($actionName, $callback, $callMethod=null, $httpMethod=null)
+Add a new action handling to the current application
 Exemple
 ```php
 $application=new Phermion();
 $application->registerAction(
 	'hello',
-	function($firname, $lastName='yolo') {
+	function($firname='John', $lastName='doe') {
 		return 'Hello '.$firname.' '.$lastName;
 	}
 	,'http'
 	,'GET'
 );
+```
+
+
+######registerServiceProvider($url)
+```php
+$application->registerServiceProvider('http://192.168.1.96/___www/phermion/foo.php');
 ```
