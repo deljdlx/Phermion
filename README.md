@@ -2,6 +2,8 @@
 
 #Introduction
 
+
+#Methods
 #######registerAction($actionName, $callback, $callMethod=null, $httpMethod=null)
 Exemple
 ```php
