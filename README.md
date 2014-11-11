@@ -1,24 +1,24 @@
 #Phermion the one file php framework
 By Julien Delsescaux
 
-#Introduction
+##Introduction
 
-#Prerequisites
+##Prerequisites
 PHP >= 5.4
 
 
-#Routing and actions
+##Routing and actions
 
-#Data storage
+##Data storage
 
-#Services providers
+##Services providers
 
-#Sharing services
-
-
+##Sharing services
 
 
-#Methods
+
+
+##Methods
 #######registerAction($actionName, $callback, $callMethod=null, $httpMethod=null)
 Exemple
 ```php
