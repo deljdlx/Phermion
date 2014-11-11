@@ -1,6 +1,6 @@
 #Phermion the one file php framework
 
-######registerAction($actionName, $callback, $callMethod=null, $httpMethod=null)
+#######registerAction($actionName, $callback, $callMethod=null, $httpMethod=null)
 Exemple
 
 $application=new Phermion();
