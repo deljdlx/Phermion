@@ -2,6 +2,17 @@
 
 #Introduction
 
+#Prerequisites
+PHP >= 5.4
+
+#Data storage
+
+#Services providers
+
+#Sharing services
+
+
+
 
 #Methods
 #######registerAction($actionName, $callback, $callMethod=null, $httpMethod=null)
