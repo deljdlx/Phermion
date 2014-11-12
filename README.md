@@ -1,5 +1,5 @@
 #Phermion the one file php framework
-By Julien Delsescaux
+By Jean Luc Biniou
 
 ##Introduction
 
