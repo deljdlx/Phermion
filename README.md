@@ -40,7 +40,7 @@ $application->registerAction(
 ######registerServiceProvider($url)
 ```php
 $application=new Phermion();
-$application->registerServiceProvider('http://somewhere.local/___www/phermion/foreignPhermion.php');
+$application->registerServiceProvider('http://somewhere.local/foreignPhermion.php');
 ```
 ######autoExpose($bool)
 ```php
