@@ -4,7 +4,7 @@ By Julien Delsescaux
 ##Introduction
 
 ##Prerequisites
-PHP >= 5.4 because of [Closure::bindTo usage](http://php.net/manual/fr/closure.bindto.php)
+PHP >= 5.4 because of [Closure::bindTo](http://php.net/manual/fr/closure.bindto.php)  usage
 
 
 ##Routing
