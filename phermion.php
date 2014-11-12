@@ -23,6 +23,7 @@ class Phermion
 	
 	protected $action;
 	protected $actions=array();
+	protected $arguments=array();
 	
 	protected $headers=array();
 	
@@ -130,7 +131,16 @@ class Phermion
 
 
 	public function action_cli_index() {
-		return $this->action_credit();
+		$buffer="\n\n".'_________________________________________________'."\n";
+		$buffer.="  ____  _                         _             
+ |  _ \| |__   ___ _ __ _ __ ___ (_) ___  _ __  
+ | |_) | '_ \ / _ \ '__| '_ ` _ \| |/ _ \| '_ \ 
+ |  __/| | | |  __/ |  | | | | | | | (_) | | | |
+ |_|   |_| |_|\___|_|  |_| |_| |_|_|\___/|_| |_|
+";
+		$buffer.='        "php '.basename(__FILE__).' help" for help'."\n";
+		$buffer.='_________________________________________________'."\n\n";
+		return $buffer;
 	}
 	
 	public function action_http_index() {
