@@ -62,7 +62,7 @@ class Phermion
 			$returnValue=$this->runDefaultAction();
 		}
 		
-				if(!$returnValue) {
+		if(!$returnValue) {
 			if($this->mode=='http') {
 				$returnValue=$this->action_http_notFound();
 			}
@@ -71,6 +71,13 @@ class Phermion
 			}
 		}
 		
+		$this->sendHeaders();
+
+		return $returnValue;
+	}
+	
+	
+	protected function sendHeaders() {
 		if($this->mode=='http') {
 			foreach($this->headers as $descriptor) {
 				if($descriptor['name']) {
@@ -80,8 +87,7 @@ class Phermion
 					header($descriptor['value']);
 				}
 			}
-		}
-		return $returnValue;
+		}	
 	}
 
 	public function addHeader($header, $content) {
@@ -231,7 +237,7 @@ class Phermion
 		$descriptors=array();
 		foreach($this->actions as $name=>$action) {
 		
-		if($this->autoExpose || (isset($this->exposedServices[$name]) && $this->exposedServices[$name])) {
+			if($this->autoExpose || (isset($this->exposedServices[$name]) && $this->exposedServices[$name])) {
 				$reflector=new ReflectionFunction($action['callback']);
 				$descriptor=array(
 					'name'=>$name,
@@ -259,29 +265,30 @@ class Phermion
 				$methodName=preg_replace('`^http_[^_]+_(.*)`i', '$1', $methodName);
 				$methodName=preg_replace('`^http_`i', '', $methodName);
 
-				if($this->autoExpose || (isset($this->exposedServices[$methodName]) && $this->exposedServices[$methodName])) {
-
-					$type=false;
-					if(preg_match('`^action_http`i', $method->name)) {
-						$type='http';
-					}
-					elseif(preg_match('`^action_http`i', $method->name)) {
-						$type='cli';
-					}
-					
-					$methodCall=false;
-					if(preg_match('`^action_http_([^_]+)_[^_]+`i', $method->name)) {
-						$methodCall=preg_replace('`action_http_([^_]+)_.*`i', '$1', $method->name);
-					}
-					
-					$descriptor=array(
-						'name'=>$methodName,
-						'type'=>$type,
-						'method'=>$methodCall,
-						'arguments'=>$this->extractParameters($method),
-					);
-					$descriptors[$methodName]=$descriptor;
+				if(!$this->autoExpose && (!isset($this->exposedServices[$methodName]) || !$this->exposedServices[$methodName])) {
+					continue;
 				}
+
+				$type=false;
+				if(preg_match('`^action_http`i', $method->name)) {
+					$type='http';
+				}
+				elseif(preg_match('`^action_http`i', $method->name)) {
+					$type='cli';
+				}
+				
+				$methodCall=false;
+				if(preg_match('`^action_http_([^_]+)_[^_]+`i', $method->name)) {
+					$methodCall=preg_replace('`action_http_([^_]+)_.*`i', '$1', $method->name);
+				}
+				
+				$descriptor=array(
+					'name'=>$methodName,
+					'type'=>$type,
+					'method'=>$methodCall,
+					'arguments'=>$this->extractParameters($method),
+				);
+				$descriptors[$methodName]=$descriptor;
 			}
 		}
 		return $descriptors;
@@ -337,9 +344,8 @@ class Phermion
 				return trim($this->sourceParts[$partName]);
 			}
 		}
-		else {
-			return null;
-		}
+		
+		return null;
 	}
 
 /*</internal>*/
@@ -357,19 +363,15 @@ class Phermion
 		
 			$descriptor=$this->actions[$actionKey];
 			$mode=true;
-			if($descriptor['mode']) {
+			if($descriptor['mode'] && $descriptor['mode']!=$this->mode) {
 				$mode=false;
-				if($descriptor['mode']==$this->mode) {
-					$mode=true;
-				}
 			}
+			
 			$method=true;
-			if($descriptor['method']) {
+			if($descriptor['method'] && $descriptor['method']!=$this->requestMethod) {
 				$method=false;
-				if($descriptor['method']==$this->requestMethod) {
-					$method=true;
-				}
 			}
+			
 			if($method && $mode) {
 				$callback=$descriptor['callback'];
 			}
@@ -467,6 +469,16 @@ class Phermion
 
 	protected function parseArgument() {
 		if($this->mode!='cli') {
+			$this->requestMethod=strtolower($_SERVER['REQUEST_METHOD']);
+		
+			$requestURI=str_replace(
+				$_SERVER['SCRIPT_NAME'],
+				'',
+				$_SERVER['REQUEST_URI']
+			);
+			$this->scriptURL=strtolower(preg_replace('`(.*?)/.*`', '$1', $_SERVER['SERVER_PROTOCOL'])).'://'.$_SERVER['SERVER_NAME'].$_SERVER['SCRIPT_NAME'];
+			$this->requestURI=preg_replace('`.*?'.$_SERVER['SERVER_NAME'].'`', '', $requestURI);
+			
 			$this->parseHTTPArguments();
 		}
 		else {
@@ -474,22 +486,10 @@ class Phermion
 		}
 	}
 	
-	
-	protected function parseHTTPArguments() {
-		$this->requestMethod=strtolower($_SERVER['REQUEST_METHOD']);
-	
-	
-		$requestURI=str_replace(
-			$_SERVER['SCRIPT_NAME'],
-			'',
-			$_SERVER['REQUEST_URI']
-		);
-		
-		
-		$this->scriptURL=strtolower(preg_replace('`(.*?)/.*`', '$1', $_SERVER['SERVER_PROTOCOL'])).'://'.$_SERVER['SERVER_NAME'].$_SERVER['SCRIPT_NAME'];
-		$this->requestURI=preg_replace('`.*?'.$_SERVER['SERVER_NAME'].'`', '', $requestURI);
 
 	
+	protected function parseHTTPArguments() {
+
 		if(strpos($this->requestURI, '/')!==false) {
 
 			$requestURI=preg_replace('`^/`', '', $this->requestURI);
@@ -687,8 +687,7 @@ class Phermion
 	protected function loadForeignServices() {
 		$this->foreignServices=false;
 		foreach($this->serviceProviders as $provider) {
-			$methods=json_decode($this->httpQuery($provider.'/expose', 'get', $arguments), true);
-			
+			$methods=json_decode($this->httpQuery($provider.'/expose', 'get', $this->arguments), true);
 			if($methods) {
 				foreach($methods as $descriptor) {
 					$this->foreignServices[strtolower($descriptor['name'])]=array(
@@ -699,28 +698,24 @@ class Phermion
 			}
 		}
 	}
+
+	
 	
 	public function callForeignService($methodName, $arguments) {
-	
-	
 
 		if($this->foreignServices===null) {
 			$this->loadForeignServices();
 		}
 		
 		$methodName=strtolower($methodName);
-		
+		$data=false;
 		
 		if(isset($this->foreignServices[$methodName])) {
 			$provider=$this->foreignServices[$methodName]['provider'];
-		
 			$data=$this->httpQuery($provider.'/'.$methodName, $this->requestMethod, $arguments);
-			if($data) {
-				return $data;
-			}
 		}
-		return false;
-}
+		return $data;
+	}
 	
 /*</service_methods>*/	
 	
@@ -735,6 +730,8 @@ class Phermion
 chdir(__DIR__);
 
 $application=new Phermion();
+
+
 echo $application->run();
 
 
