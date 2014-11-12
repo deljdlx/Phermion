@@ -39,14 +39,17 @@ $application->registerAction(
 
 ######registerServiceProvider($url)
 ```php
-$application->registerServiceProvider('http://localhost/___www/phermion/foo.php');
+$application=new Phermion();
+$application->registerServiceProvider('http://somewhere.local/___www/phermion/foreignPhermion.php');
 ```
 ######autoExpose($bool)
 ```php
+$application=new Phermion();
 $application->autoExpose(true);
 ```
 ######exposeForeign($bool)
 ```php
+$application=new Phermion();
 $application->exposeForeign(true);
 ```
 
