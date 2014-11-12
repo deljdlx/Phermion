@@ -23,6 +23,7 @@ PHP >= 5.4
 ##Methods
 ######registerAction($actionName, $callback, $callMethod=null, $httpMethod=null)
 Add a new action handling to the current application
+
 Exemple
 ```php
 $application=new Phermion();
@@ -35,8 +36,6 @@ $application->registerAction(
 	,'GET'
 );
 ```
-
-
 ######registerServiceProvider($url)
 ```php
 $application=new Phermion();
