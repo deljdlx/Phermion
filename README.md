@@ -6,6 +6,8 @@ By Julien Delsescaux
 ##Prerequisites
 PHP >= 5.4 because of [Closure::bindTo](http://php.net/manual/fr/closure.bindto.php)  usage
 
+##Quick start
+
 
 ##Routing
 
