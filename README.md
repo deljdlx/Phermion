@@ -39,5 +39,15 @@ $application->registerAction(
 
 ######registerServiceProvider($url)
 ```php
-$application->registerServiceProvider('http://192.168.1.96/___www/phermion/foo.php');
+$application->registerServiceProvider('http://localhost/___www/phermion/foo.php');
 ```
+######autoExpose($bool)
+```php
+$application->autoExpose(true);
+```
+######exposeForeign($bool)
+```php
+$application->exposeForeign(true);
+```
+
+

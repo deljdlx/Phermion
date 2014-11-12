@@ -30,6 +30,7 @@ class Phermion
 	protected $foreignServices=null; //array();
 	
 	protected $autoExpose=false;
+	protected $exposeForeignServices=false;
 	protected $exposedServices=array();
 	
 	protected $variables=array();
@@ -110,21 +111,6 @@ class Phermion
 
 
 
-	public function httpQuery($url, $method='get', $data=array()) {
-		$raw=http_build_query($data);
-		
-		$options = array(
-			'http' => array(
-				'header'  => "Content-type: application/x-www-form-urlencoded\r\nContent-Length: ".strlen($raw)."\r\n",
-				'method'  => strtoupper($method),
-				'content' => $raw,
-				'request_fulluri' => true
-			),
-		);
-		$context  = stream_context_create($options);
-		
-		return file_get_contents($url, false, $context);
-	}
 
 
 
@@ -202,7 +188,12 @@ class Phermion
 	
 		$this->addHeader('Content-type', 'application/json; encoding="utf-8"');
 		
-		$descriptors=array_merge($this->exposeMethods(), $this->exposeCustomActions());
+		if($this->exposeForeignServices) {
+			$descriptors=array_merge($this->exposeForeignActions(), $this->exposeMethods(), $this->exposeCustomActions());
+		}
+		else {
+			$descriptors=array_merge($this->exposeMethods(), $this->exposeCustomActions());
+		}
 
 		return json_encode($descriptors);
 	}	
@@ -214,6 +205,18 @@ class Phermion
 
 
 /*<internal>*/
+	protected function exposeForeignActions() {
+		$descriptors=array();
+		if($this->foreignServices===null) {
+			$this->loadForeignServices();
+		}
+		
+		foreach($this->foreignServices as $descriptor) {
+			$descriptors[$descriptor['descriptor']['name']]=$descriptor['descriptor'];
+		}
+		return $descriptors;
+	}
+
 	protected function exposeCustomActions() {
 		$descriptors=array();
 		foreach($this->actions as $name=>$action) {
@@ -226,7 +229,7 @@ class Phermion
 					'method'=>$action['method'],
 					'arguments'=>$this->extractParameters($reflector),
 				);
-				$descriptors[]=$descriptor;
+				$descriptors[$name]=$descriptor;
 			}
 		}
 		return $descriptors;
@@ -267,7 +270,7 @@ class Phermion
 						'method'=>$methodCall,
 						'arguments'=>$this->extractParameters($method),
 					);
-					$descriptors[]=$descriptor;
+					$descriptors[$methodName]=$descriptor;
 				}
 			}
 		}
@@ -336,9 +339,13 @@ class Phermion
 	protected function runCustomAction() {
 		$callback=false;
 		$returnValue='';
+		
+		$actionKey=strtolower($this->action);
 	
-		if(isset($this->actions[$this->action])) {
-			$descriptor=$this->actions[$this->action];
+		if(isset($this->actions[$actionKey])) {
+		
+		
+			$descriptor=$this->actions[$actionKey];
 			$mode=true;
 			if($descriptor['mode']) {
 				$mode=false;
@@ -358,7 +365,7 @@ class Phermion
 			}
 		}
 		
-		
+	
 		if($callback) {
 			$reflector=new \ReflectionFunction($callback);
 			$parameters=array();
@@ -390,30 +397,33 @@ class Phermion
 		}
 	}
 	
-	
-	protected function runDefaultAction() {
-		$action=false;
-
-		$methodNames=array(
+	protected function getPossibleActionNames() {
+		return array(
 			'action_'.$this->mode.'_'.$this->requestMethod.'_'.$this->action,
 			'action_'.$this->mode.'_'.$this->action,
 			'action_'.$this->action,
 		);
-
-
+	}
+	
+	protected function getExecutableActionName() {
+		$methodNames=$this->getPossibleActionNames();
 		foreach($methodNames as $methodName) {	
 			if(method_exists($this, $methodName)) {
-				$action=$methodName;
-				break;
+				return $methodName;
 			}
 		}
-		
+		return false;
+	}
+	
+	
+	protected function runDefaultAction() {
+		$action=$this->getExecutableActionName();
+
 		if(!$action && $this->action) {
-			$data=$this->__call($this->action, $this->arguments);
+			$data=$this->callForeignService($this->action, $this->arguments);
 			return $data;
 		}
 		else if($action) {
-		
 	
 			$reflector=new \Reflectionmethod($this, $action);
 			$parameters=array();
@@ -546,7 +556,7 @@ class Phermion
 /*</routing>*/
 
 
-/*<storage>*/
+/*<storage_methods>*/
 	
 	public function storeFile($fileId, $file, $mimeType='') {
 		$fileBuffer=file_get_contents($file);
@@ -596,10 +606,10 @@ class Phermion
 		
 		$this->variables=$data;
 	}
+/*</storage_methods>*/
 
 
-/*</storage>*/
-/*<application_method>*/
+/*<application_methods>*/
 
 	public function registerServiceProvider($url) {
 		$this->serviceProviders[]=$url;
@@ -607,13 +617,6 @@ class Phermion
 
 	public function getSource() {
 		return $this->source;
-	}
-
-	public function duplicate($filepath) {
-		return $this->save($filepath);
-	}	
-	protected function createVoid() {
-	
 	}
 
 	public function save($filepath=null) {
@@ -639,11 +642,31 @@ class Phermion
 		}
 	}
 	
-/*</application_method>*/
+/*</application_methods>*/
 /*<service_methods>*/
-	
-	public function setAutoExpose($value) {
+
+
+	public function httpQuery($url, $method='get', $data=array()) {
+		$raw=http_build_query($data);
+		
+		$options = array(
+			'http' => array(
+				'header'  => "Content-type: application/x-www-form-urlencoded\r\nContent-Length: ".strlen($raw)."\r\n",
+				'method'  => strtoupper($method),
+				'content' => $raw,
+				'request_fulluri' => true
+			),
+		);
+		$context  = stream_context_create($options);
+		return file_get_contents($url, false, $context);
+	}
+
+	public function autoExpose($value) {
 		$this->autoExpose=$value;
+	}
+	
+	public function exposeForeign($value) {
+		$this->exposeForeignServices=$value;
 	}
 	
 	public function exposeService($action, $value=true) {
@@ -652,25 +675,34 @@ class Phermion
 	
 	
 	protected function loadForeignServices() {
+		$this->foreignServices=false;
 		foreach($this->serviceProviders as $provider) {
 			$methods=json_decode($this->httpQuery($provider.'/expose', 'get', $arguments), true);
 			
 			if($methods) {
 				foreach($methods as $descriptor) {
-					$this->foreignServices[$descriptor['name']]=$provider;
+					$this->foreignServices[strtolower($descriptor['name'])]=array(
+						'provider'=>$provider,
+						'descriptor'=>$descriptor
+					);
 				}
 			}
 		}
 	}
 	
-	public function __call($methodName, $arguments) {
+	public function callForeignService($methodName, $arguments) {
+	
+	
+
 		if($this->foreignServices===null) {
-			$this->foreignServices=false;
 			$this->loadForeignServices();
 		}
 		
+		$methodName=strtolower($methodName);
+		
+		
 		if(isset($this->foreignServices[$methodName])) {
-			$provider=$this->foreignServices[$methodName];
+			$provider=$this->foreignServices[$methodName]['provider'];
 		
 			$data=$this->httpQuery($provider.'/'.$methodName, $this->requestMethod, $arguments);
 			if($data) {
@@ -693,8 +725,6 @@ class Phermion
 chdir(__DIR__);
 
 $application=new Phermion();
-
-
 echo $application->run();
 
 
