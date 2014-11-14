@@ -843,7 +843,7 @@ function getCorePackage() {
 						<div>
 							<h2>Qu\'est ce que Phermion ?</h2>
 							<p>
-								Phermion est un micro framework ayant la capacité de fonctionner sans aucune dépendance.  L\'objectif  de ce framwork est d\'offrir la possiblité de créer rapidement des containers de services déployables instantanément. En effet, le code source d\'une application Phermion encapsule le noyaux du framework, le code métier mais aussi les données nécessaires au fonctionnement. En outre Phermion embarque de base des mécanismes permettant d\'étendre rapidement votre code ou même de déléguer des taches à d\'autre noeud Phermion.
+								Phermion est un micro framework ayant la capacité de fonctionner sans aucune dépendance.  L\'objectif  de ce framework est d\'offrir la possiblité de créer rapidement des containers de services déployables instantanément. En effet, le code source d\'une application Phermion encapsule le noyaux du framework, le code métier mais aussi les données nécessaires au fonctionnement. En outre Phermion embarque de base des mécanismes permettant d\'étendre rapidement votre code ou même de déléguer des taches à d\'autres applications Phermion.
 							</p>
 						</div>
 						<div>
@@ -858,6 +858,11 @@ $application->addAction("sayHello", function($who="John Doe") {
 echo $application->run();
 ', true).'</pre>
 
+								L\'application que vous venez de créer pourra être lancée via une URL de cette forme :<br/>
+								<code>http://phermion.com/?action=sayHello&who=George abitbol</code>
+								<br/><br/>Mais elle pourra également être disponible en ligne de commende en tappant cette ligne php<pre>
+php phermion.php sayHello who="George abitbol"
+								</pre>
 							</p>
 						</div>
 						<div>
