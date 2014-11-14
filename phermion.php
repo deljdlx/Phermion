@@ -491,8 +491,16 @@ class Phermion
 				'',
 				$_SERVER['REQUEST_URI']
 			);
+			
+			
 			$this->scriptURL=strtolower(preg_replace('`(.*?)/.*`', '$1', $_SERVER['SERVER_PROTOCOL'])).'://'.$_SERVER['SERVER_NAME'].$_SERVER['SCRIPT_NAME'];
-			$this->requestURI=preg_replace('`.*?'.$_SERVER['SERVER_NAME'].'`', '', $requestURI);
+			
+			
+			$this->requestURI=preg_replace('`.*?'.$_SERVER['SERVER_NAME'].'/?`', '', $requestURI);
+			$this->requestURI=str_replace('/?', '?', $this->requestURI);
+			
+
+			
 			
 			$this->parseHTTPArguments();
 		}
@@ -506,12 +514,7 @@ class Phermion
 	protected function parseHTTPArguments() {
 
 		if(strpos($this->requestURI, '/')!==false) {
-
 			$requestURI=preg_replace('`^/`', '', $this->requestURI);
-			
-			
-			
-			
 			$arguments=explode('/', preg_replace('`\?.*`', '', $requestURI));
 			$arguments=array_map('urldecode', $arguments);
 			
