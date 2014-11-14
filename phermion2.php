@@ -156,65 +156,18 @@ class Phermion
 					<link rel="icon" type="image/png" href="'.$this->scriptURL.'?action=getResource&resourceId=favicon"/>
 					<title>Phermion the one file framework</title>
 					<style>
+					
 						* {margin:0px; padding:0px;}
 						html {font-family: arial;	background-color:#666;text-align:center; height:100%;color:#FFF;}
 						#container { top:40%; position: absolute; width:100%;}
 						h1 {font-size:50px;} a { font-size:12px; color:#FFF; font-weight: bold;}
 						#content {margin-top:-152px;}
-						
-						#forkongithub a{
-							background:#000;
-							text-decoration:none;
-							font-family:arial,sans-serif;
-							text-align:center;
-							font-weight:bold;
-							padding:5px 40px;
-							font-size:1rem;
-							line-height:2rem;
-							position:relative;
-							transition:0.5s;
-						}
-						#forkongithub a:hover{
-							background:#26437C;color:#FFF;
-						}
-						#forkongithub a::before,#forkongithub a::after{
-							content:"";
-							width:100%;
-							display:block;
-							position:absolute;
-							top:1px;left:0;
-							height:1px;
-							background:#fff;
-						}
-						#forkongithub a::after{
-							bottom:1px;
-							top:auto;
-						}
-						@media screen and (min-width:800px) {
-							#forkongithub{
-								position:fixed;display:block;
-								top:0;
-								right:0;
-								width:200px;
-								overflow:hidden;
-								height:200px;
-								z-index:9999;
-							}
-							#forkongithub a{
-								width:200px;position:absolute;
-								top:60px;
-								right:-60px;
-								transform:rotate(45deg);-webkit-transform:rotate(45deg);-ms-transform:rotate(45deg);-moz-transform:rotate(45deg);-o-transform:rotate(45deg);
-								box-shadow:4px 4px 10px rgba(0,0,0,0.8);
-							}
-						}
 					</style>
 				</head>
 				<body>
 				
 					<span id="forkongithub"><a href="https://github.com/ElBiniou/Phermion">Fork me on GitHub</a></span>
-					
-					
+				
 					<div id="container">
 						<img src="'.$this->scriptURL.'?action=getResource&resourceId=phermionLogo" id="logo"/>
 						<div id="content">
@@ -520,16 +473,6 @@ class Phermion
 
 	protected function parseArgument() {
 		if($this->mode!='cli') {
-			$this->requestMethod=strtolower($_SERVER['REQUEST_METHOD']);
-		
-			$requestURI=str_replace(
-				$_SERVER['SCRIPT_NAME'],
-				'',
-				$_SERVER['REQUEST_URI']
-			);
-			$this->scriptURL=strtolower(preg_replace('`(.*?)/.*`', '$1', $_SERVER['SERVER_PROTOCOL'])).'://'.$_SERVER['SERVER_NAME'].$_SERVER['SCRIPT_NAME'];
-			$this->requestURI=preg_replace('`.*?'.$_SERVER['SERVER_NAME'].'`', '', $requestURI);
-			
 			$this->parseHTTPArguments();
 		}
 		else {
@@ -537,10 +480,22 @@ class Phermion
 		}
 	}
 	
-
 	
 	protected function parseHTTPArguments() {
+		$this->requestMethod=strtolower($_SERVER['REQUEST_METHOD']);
+	
+	
+		$requestURI=str_replace(
+			$_SERVER['SCRIPT_NAME'],
+			'',
+			$_SERVER['REQUEST_URI']
+		);
+		
+		
+		$this->scriptURL=strtolower(preg_replace('`(.*?)/.*`', '$1', $_SERVER['SERVER_PROTOCOL'])).'://'.$_SERVER['SERVER_NAME'].$_SERVER['SCRIPT_NAME'];
+		$this->requestURI=preg_replace('`.*?'.$_SERVER['SERVER_NAME'].'`', '', $requestURI);
 
+	
 		if(strpos($this->requestURI, '/')!==false) {
 
 			$requestURI=preg_replace('`^/`', '', $this->requestURI);
@@ -738,7 +693,13 @@ class Phermion
 	protected function loadForeignServices() {
 		$this->foreignServices=false;
 		foreach($this->serviceProviders as $provider) {
-			$methods=json_decode($this->httpQuery($provider.'/expose', 'get', $this->arguments), true);
+			$this->loadServicesFromProvider($provider);
+		}
+	}
+	
+	protected function loadServicesFromProvider($provider) {
+			$methods=json_decode($this->httpQuery($provider.'/expose', 'get', $arguments), true);
+			
 			if($methods) {
 				foreach($methods as $descriptor) {
 					$this->foreignServices[strtolower($descriptor['name'])]=array(
@@ -747,25 +708,29 @@ class Phermion
 					);
 				}
 			}
-		}
 	}
-
 	
 	
 	public function callForeignService($methodName, $arguments) {
+	
+	
 
 		if($this->foreignServices===null) {
 			$this->loadForeignServices();
 		}
 		
 		$methodName=strtolower($methodName);
-		$data=false;
+		
 		
 		if(isset($this->foreignServices[$methodName])) {
 			$provider=$this->foreignServices[$methodName]['provider'];
+		
 			$data=$this->httpQuery($provider.'/'.$methodName, $this->requestMethod, $arguments);
+			if($data) {
+				return $data;
+			}
 		}
-		return $data;
+		return false;
 	}
 	
 /*</service_methods>*/	
@@ -781,6 +746,22 @@ class Phermion
 chdir(__DIR__);
 
 $application=new Phermion();
+
+$application->registerAction('sayHello', function($string='') {
+	return 'hello world '.$string;
+});
+
+$application->autoExpose(true);
+
+/*
+$application->registerAction('sayHello', function() {
+	return 'hello world';
+});
+*/
+
+
+
+$application->registerServiceProvider('http://192.168.1.96/___www/phermion/phermion2.php');
 
 
 echo $application->run();
