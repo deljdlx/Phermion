@@ -11,6 +11,9 @@ PHP >= 5.4 because of [Closure::bindTo](http://php.net/manual/fr/closure.bindto.
 
 ##Routing
 
+
+
+
 ##Actions
 
 ##Data storage
