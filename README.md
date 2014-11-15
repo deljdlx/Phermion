@@ -51,14 +51,8 @@ $application=new Phermion();
 $application->registerServiceProvider('http://somewhere.local/foreignPhermion.php');
 ```
 ######autoExpose($bool)
-```php
-$application=new Phermion();
-$application->autoExpose(true);
-```
+
 ######exposeForeign($bool)
-```php
-$application=new Phermion();
-$application->exposeForeign(true);
-```
+
 
 
