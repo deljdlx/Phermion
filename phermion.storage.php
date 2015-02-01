@@ -15,7 +15,7 @@ ini_set('display_errors', 'on');
  */
 
 //class NoSQL extends Sqlite
-class NoSQL extends \Phermion
+class Storage extends \Phermion
 {
 
 	protected $entityTableName='entity';
