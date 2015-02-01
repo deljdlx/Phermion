@@ -25,6 +25,17 @@ class UserStorage extends \Phermion
 		return $object;
 	}
 
+
+	public function action_update($id, $login, $password, $email) {
+		$object=$this->update($id, json_encode(array(
+			'login'=>$login,
+			'password'=>$password,
+			'email'=>$email
+		)));
+		return $object;
+	}
+
+
 	public function action_login($login, $password) {
 
 		/*
@@ -60,6 +71,7 @@ class UserStorage extends \Phermion
 
 		if(!empty($data)) {
 			$id = reset($data)['id'];
+			//return $id;
 			$object = $this->get($id);
 			return $object;
 		}
