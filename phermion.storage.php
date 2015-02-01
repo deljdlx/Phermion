@@ -7,7 +7,7 @@ include(__DIR__.'/phermion.php');
 
 //include(__DIR__.'/phermion.sqlite.php');
 
-ini_set('display_errors', 'on');
+//ini_set('display_errors', 'on');
 
 
 /**
@@ -70,6 +70,18 @@ class Storage extends \Phermion
 	}
 
 
+	public function action_initialize($repositoryName) {
+		$this->initialize($repositoryName);
+		return $repositoryName;
+	}
+
+
+	public function action_find($criterions) {
+		foreach ($criterions as $objectType=>$descriptor) {
+		}
+		return $criterions;
+	}
+
 
 	public function action_update($id, $values) {
 		if(($values=json_decode($values, true)) && $id) {
@@ -79,6 +91,22 @@ class Storage extends \Phermion
 			return false;
 		}
 	}
+
+
+	protected function action_query($query) {
+		return $this->query($query, $this->repositoryName);
+	}
+
+	protected function action_queryAndFetch($query) {
+		return $this->queryAndFetch($query, $this->repositoryName);
+	}
+
+	protected function action_insert($query) {
+		return $this->insert($query, $this->repositoryName);
+	}
+
+
+
 
 
 
@@ -280,7 +308,11 @@ class Storage extends \Phermion
 
 
 $application=new Storage();
+
 	$application->autoExpose(true);
+
+	//$application->exposeForeign(true);
+
 	$application->addServiceProvider('http://192.168.1.64/project/Phermion/phermion.sqlite.php');
 	$application->initialize('storage');
 

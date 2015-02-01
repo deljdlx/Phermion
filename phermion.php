@@ -794,6 +794,7 @@ class Phermion
 			$data=$this->httpQuery($provider.'?action='.$methodName, $this->requestMethod, $arguments);
 		}
 
+
 		if($object=json_decode($data, true)) {
 			return $object;
 		}

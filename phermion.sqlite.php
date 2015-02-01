@@ -5,7 +5,7 @@ namespace Phermion;
 include(__DIR__.'/phermion.php');
 
 
-ini_set('display_errors', 'on');
+//ini_set('display_errors', 'on');
 
 
 /**
@@ -105,7 +105,12 @@ class Sqlite extends \Phermion
 	protected function getLastInsertId() {
 		$query="SELECT last_insert_rowid() as lastInsertId";
 		$data=$this->queryAndFetch($query);
-		return $data[0]['lastInsertId'];
+		if(!empty($data)) {
+			return $data[0]['lastInsertId'];
+		}
+		else {
+			return false;
+		}
 	}
 
 
@@ -138,6 +143,7 @@ class Sqlite extends \Phermion
 
 $application=new Sqlite();
 $application->autoExpose(true);
+//$application->exposeForeign(true);
 echo $application->run();
 //*/
 
