@@ -40,7 +40,11 @@ class Phermion
 	
 	protected $variables=array();
 
-	public function __construct() {
+	public function __construct($autorun=true) {
+	
+		chdir(__DIR__);
+		date_default_timezone_set('Europe/Paris');
+	
 	
 		$this->sourceFile=getcwd().'/'.basename(__FILE__);
 		$this->source=file_get_contents($this->sourceFile);
@@ -63,10 +67,15 @@ class Phermion
 	public function run() {
 
 		$returnValue=$this->runRoute();
-		
-		$this->sendHeaders();
 
+		if(!is_scalar($returnValue)) {
+			$this->addHeader('Content-type', 'application/json; charset="utf-8"');
+			$returnValue=json_encode($returnValue);
+		}
+
+		$this->sendHeaders();
 		return $returnValue;
+
 	}
 	
 	public function runRoute() {
@@ -180,6 +189,10 @@ class Phermion
 				return $result;
 			}
 		}
+
+		/*
+		$data=$this->callForeignService($methodName, $parameters);
+		*/
 	}
 	
 	
@@ -198,6 +211,19 @@ class Phermion
 	public function action_index() {
 		return 'Phermion ok'."\n";
 	}
+	public function action_http_index() {
+		return '<!doctype html><html>
+			<head>
+				<title>Phermion</title>
+				<style>
+					html {background-color:#CCC; font-family: arial;}
+				</style>
+			</head>
+			<body>
+				<h1>Phermion is running</h1>
+			</body><html>'."\n";
+	}
+
 
 
 	public function action_http_notFound() {
@@ -446,13 +472,18 @@ class Phermion
 		}
 		return false;
 	}
-	
-	
+
+
 	protected function runDefaultAction() {
-	
 		$action=$this->getExecutableActionName();
 
-		if($action) {
+
+		if(!$action && $this->action) {
+			$data=$this->callForeignService($this->action, $this->arguments);
+			return $data;
+		}
+		else if($action) {
+
 			$reflector=new \Reflectionmethod($this, $action);
 			$parameters=array();
 			foreach($reflector->getParameters() as $index=>$parameter) {
@@ -460,7 +491,7 @@ class Phermion
 					$parameters[]=$this->arguments[$parameter->name];
 				}
 				else {
-					
+
 					if(isset($this->arguments[$index])) {
 						$parameters[]=$this->arguments[$index];
 					}
@@ -472,6 +503,7 @@ class Phermion
 					}
 				}
 			}
+
 			return call_user_func_array(
 				array($this, $action),
 				$parameters
@@ -662,6 +694,7 @@ class Phermion
 /*<application_methods>*/
 
 	public function addServiceProvider($url) {
+
 		$this->serviceProviders[]=$url;
 	}
 
@@ -725,8 +758,14 @@ class Phermion
 	
 	
 	protected function loadForeignServicesDescriptors() {
+
 		$this->foreignServices=false;
+
+
+
 		foreach($this->serviceProviders as $provider) {
+
+
 			$methods=json_decode($this->httpQuery($provider.'/'.$this->exposeActionName(), 'get', $this->arguments), true);
 			if($methods) {
 				foreach($methods as $descriptor) {
@@ -742,13 +781,14 @@ class Phermion
 	
 	
 	public function callForeignService($methodName, $arguments) {
+
 		if($this->foreignServices===null) {
 			$this->loadForeignServicesDescriptors();
 		}
 		
 		$methodName=strtolower($methodName);
 		$data=false;
-		
+
 		if(isset($this->foreignServices[$methodName])) {
 			$provider=$this->foreignServices[$methodName]['provider'];
 			$data=$this->httpQuery($provider.'/'.$methodName, $this->requestMethod, $arguments);
@@ -982,21 +1022,14 @@ php phermion.php sayHello who="George abitbol"
 
 
 
-
-chdir(__DIR__);
-
+/*
 $application=new Phermion();
 $application->addPackage(getCorePackage());
-
-
 $application->addAction("sayHello", function($who="John Doe") {
 	return "Hello ".$who."\n";
 });
-
-
-
 echo $application->run();
-
+*/
 
 
 return;
