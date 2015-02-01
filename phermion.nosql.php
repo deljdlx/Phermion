@@ -3,6 +3,8 @@
 namespace Phermion;
 
 
+//include(__DIR__.'/phermion.php');
+
 include(__DIR__.'/phermion.sqlite.php');
 
 ini_set('display_errors', 'on');
@@ -10,7 +12,6 @@ ini_set('display_errors', 'on');
 
 /**
  * Class PhermionStorage
- * @property  \SQLite3 $database
  */
 
 //class NoSQL extends Sqlite
@@ -20,10 +21,9 @@ class NoSQL extends \Phermion
 	protected $entityTableName='entity';
 	protected $attributeTableName='attribute';
 
-	public function __construct() {
-		parent::__construct();
-		$this->initialize();
-	}
+
+	protected $repositoryName;
+
 
 
 	public function action_add($type, $values) {
@@ -37,6 +37,36 @@ class NoSQL extends \Phermion
 
 	public function action_delete($id) {
 		return $this->deleteObject($id);
+	}
+
+	public function action_getAll() {
+
+		$query="
+			SELECT * FROM ".$this->entityTableName." entity
+			JOIN ".$this->attributeTableName." attribute
+				ON attribute.id_entity=entity.id
+		";
+
+		$objects=array();
+
+		$rows=$this->_queryAndFetch($query);
+		if(!empty($rows)) {
+			foreach ($rows as $row) {
+				if (!isset($objects[$row['id_entity']])) {
+					$objects[$row['id_entity']] = array(
+						'id' => $row['id_entity'],
+						'type' => $row['type'],
+						'date_creation' => $row['date_creation'],
+						'date_modification' => $row['date_modification'],
+						'values' => array()
+					);
+				}
+				$objects[$row['id_entity']]['values'][$row['name']] = $row['value'];
+			}
+		}
+
+		return $objects;
+
 	}
 
 
@@ -56,7 +86,7 @@ class NoSQL extends \Phermion
 		$object=$this->fetchObject($id);
 
 		$query="DELETE FROM ".$this->entityTableName." WHERE id=".$id;
-		$this->query($query);
+		$this->_query($query);
 		$this->deleteObjectValues($id);
 
 		return $object;
@@ -66,7 +96,7 @@ class NoSQL extends \Phermion
 		$this->deleteObjectValues($id);
 		$this->saveObjectValues($id, $values);
 		$query="UPDATE ".$this->entityTableName." SET date_modification='".$this->now()."' WHERE id=".$id;
-		$this->query($query);
+		$this->_query($query);
 		return $this->fetchObject($id);
 	}
 
@@ -86,8 +116,10 @@ class NoSQL extends \Phermion
 				'".$type."'
 			)
 		";
-		$this->query($query);
-		$idEntity=$this->getLastInsertId();
+
+		$idEntity=$this->_insert($query);
+
+
 
 		if($values=json_decode($values, true)) {
 			$this->saveObjectValues($idEntity, $values);
@@ -100,7 +132,7 @@ class NoSQL extends \Phermion
 
 	protected function deleteObjectValues($idObject) {
 		$query="DELETE FROM ".$this->attributeTableName." WHERE id_entity=".$idObject;
-		return $this->query($query);
+		return $this->_query($query);
 	}
 
 
@@ -117,7 +149,7 @@ class NoSQL extends \Phermion
 					'".$value."'
 				)
 			";
-			$this->query($query);
+			$this->_query($query);
 		}
 	}
 
@@ -132,7 +164,8 @@ class NoSQL extends \Phermion
 		";
 
 
-		$data=$this->queryAndFetch($query);
+
+		$data=$this->_queryAndFetch($query);
 
 
 		if(!empty($data)) {
@@ -160,16 +193,17 @@ class NoSQL extends \Phermion
 	//==============================================================
 
 
-	protected function initialize() {
+	public function initialize($repositoryName) {
 
-		$this->databaseFile=__DIR__.'/storage.sqlite';
-		$this->database=new \SQLite3($this->databaseFile);
+		$this->repositoryName=$repositoryName;
+		$this->initializeDatabase($repositoryName);
 
-		if(!$this->tableExists('entity')) {
+
+		if(!$this->_tableExists('entity')) {
 			$this->createEntityTable();
 		}
 
-		if(!$this->tableExists('attribute')) {
+		if(!$this->_tableExists('attribute')) {
 			$this->createAttributeTable();
 		}
 	}
@@ -183,16 +217,17 @@ class NoSQL extends \Phermion
 				type TEXT
 			)
 		";
-		$this->query($query);
+
+		$this->_query($query);
 
 		$indexQuery="CREATE INDEX type ON  ".$this->entityTableName."(type);";
-		$this->query($indexQuery);
+		$this->_query($indexQuery);
 
 		$indexCreation="CREATE INDEX creation ON  ".$this->entityTableName."(date_creation);";
-		$this->query($indexCreation);
+		$this->_query($indexCreation);
 
 		$indexModification="CREATE INDEX modification ON  ".$this->entityTableName."(date_modification);";
-		$this->query($indexModification);
+		$this->_query($indexModification);
 	}
 
 	protected function createAttributeTable() {
@@ -204,18 +239,35 @@ class NoSQL extends \Phermion
 				value TEXT
 			)
 		";
-		$this->query($query);
+		$this->_query($query);
 
 		$indexQuery="CREATE INDEX name ON  ".$this->attributeTableName."(name);";
-		$this->query($indexQuery);
+		$this->_query($indexQuery);
 
 		$indexQuery="CREATE INDEX id_entity ON  ".$this->attributeTableName."(id_entity);";
-		$this->query($indexQuery);
+		$this->_query($indexQuery);
 
 		$indexQuery="CREATE INDEX value ON  ".$this->attributeTableName."(value);";
-		$this->query($indexQuery);
-
+		$this->_query($indexQuery);
 	}
+
+
+	protected function _tableExists($tableName) {
+		return $this->tableExists($tableName, $this->repositoryName);
+	}
+
+	protected function _query($query) {
+		return $this->query($query, $this->repositoryName);
+	}
+
+	protected function _queryAndFetch($query) {
+		return $this->queryAndFetch($query, $this->repositoryName);
+	}
+
+	protected function _insert($query) {
+		return $this->insert($query, $this->repositoryName);
+	}
+
 
 
 	//==============================================================
@@ -223,18 +275,18 @@ class NoSQL extends \Phermion
 }
 
 
-$test=new Sqlite();
+
+
 
 
 $application=new NoSQL();
-$application->addPackage($test);
 
-//$application->addServiceProvider('http://192.168.1.64/project/Phermion/phermion.sqlite.php');
-$application->initialize();
 
-//$application->dropDatabase();
-//$application->initialize();
+$application->addServiceProvider('http://192.168.1.64/project/Phermion/phermion.sqlite.php');
 
+$application->initialize('storage');
 
 echo $application->run();
+
+exit();
 

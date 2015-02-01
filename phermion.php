@@ -190,9 +190,9 @@ class Phermion
 			}
 		}
 
-		/*
-		$data=$this->callForeignService($methodName, $parameters);
-		*/
+
+		return $this->callForeignService($methodName, $parameters);
+
 	}
 	
 	
@@ -228,7 +228,7 @@ class Phermion
 
 	public function action_http_notFound() {
 		$this->addHeader(null, 'HTTP/1.0 404 Not Found');
-		return '404 Not found';
+		return '';
 	}
 	public function action_cli_notFound() {
 		return 'Error : action '.$this->action.' not found'."\n";
@@ -762,11 +762,10 @@ class Phermion
 		$this->foreignServices=false;
 
 
-
 		foreach($this->serviceProviders as $provider) {
+			$methods=json_decode($this->httpQuery($provider.'?action=expose', 'get', $this->arguments), true);
 
 
-			$methods=json_decode($this->httpQuery($provider.'/'.$this->exposeActionName(), 'get', $this->arguments), true);
 			if($methods) {
 				foreach($methods as $descriptor) {
 					$this->foreignServices[strtolower($descriptor['name'])]=array(
@@ -776,24 +775,27 @@ class Phermion
 				}
 			}
 		}
+
+
 	}
 
-	
-	
-	public function callForeignService($methodName, $arguments) {
 
+
+	public function callForeignService($methodName, $arguments) {
 		if($this->foreignServices===null) {
 			$this->loadForeignServicesDescriptors();
 		}
-		
+
 		$methodName=strtolower($methodName);
 		$data=false;
 
+
 		if(isset($this->foreignServices[$methodName])) {
 			$provider=$this->foreignServices[$methodName]['provider'];
-			$data=$this->httpQuery($provider.'/'.$methodName, $this->requestMethod, $arguments);
+			$data=$this->httpQuery($provider.'?action='.$methodName, $this->requestMethod, $arguments);
 		}
-		return $data;
+
+		return  json_decode($data, true);
 	}
 	
 /*</service_methods>*/
@@ -1023,6 +1025,30 @@ php phermion.php sayHello who="George abitbol"
 
 
 /*
+if(isset($_SERVER)) {
+	$callstack=debug_backtrace();
+	if($callstack[0]['file']==$_SERVER['SCRIPT_FILENAME']) {
+
+		$source=file_get_contents($_SERVER['SCRIPT_FILENAME']);
+		$namespace=preg_replace('`.*?namespace\s+(.+?);.*`s', '$1', $source);
+
+		$className=preg_replace('`.*?class\s+(.+?)\W.*`s', '$1', $source);
+
+		$fullClassName='\\'.$namespace.'\\'.$className;
+
+
+
+		register_shutdown_function(function() use($fullClassName) {
+			$instance=new $fullClassName();
+			echo $instance->run();
+		});
+	}
+}
+*/
+
+
+
+/*
 $application=new Phermion();
 $application->addPackage(getCorePackage());
 $application->addAction("sayHello", function($who="John Doe") {
@@ -1032,7 +1058,6 @@ echo $application->run();
 */
 
 
-return;
 /*</custom_code>*/
 /*</application>*/
 /*<data>*//*

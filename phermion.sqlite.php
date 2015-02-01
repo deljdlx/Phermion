@@ -22,33 +22,55 @@ class Sqlite extends \Phermion
 
 	public function __construct() {
 		parent::__construct();
-		$this->initialize();
 	}
 
 	//==============================================================
 	//==============================================================
 
-	public function action_queryAndFetch($query) {
+	public function action_queryAndFetch($query, $repositoryName) {
+		$this->initializeDatabase($repositoryName);
 		return $this->queryAndFetch($query);
 	}
 
-	public function action_query($query) {
+	public function action_query($query, $repositoryName) {
+		$this->initializeDatabase($repositoryName);
 		return $this->query($query);
 	}
 
-	public function action_tableExists($tableName) {
+	public function action_tableExists($tableName, $repositoryName) {
+		$this->initializeDatabase($repositoryName);
 		return $this->tableExists($tableName);
+	}
+
+	public function action_insert($query, $repositoryName) {
+		$this->initializeDatabase($repositoryName);
+		$this->query($query);
+		return $this->getLastInsertId();
+	}
+
+
+	public function action_initializeDatabase($repositoryName) {
+		$this->initializeDatabase($repositoryName);
+		return $repositoryName;
+	}
+
+
+	public function action_dropDatabase($repositoryName) {
+		$this->initializeDatabase($repositoryName);
+		return $this->dropDatabase();
 	}
 
 
 	//==============================================================
 	//==============================================================
 
-	protected function initialize() {
+	protected function initializeDatabase($repositoryName) {
 
-		$this->databaseFile=__DIR__.'/storage.sqlite';
+
+		$this->databaseFile=__DIR__.'/'.$repositoryName.'.sqlite';
 		$this->database=new \SQLite3($this->databaseFile);
-
+		return true;
+		//return $this->database;
 	}
 
 
@@ -107,10 +129,8 @@ class Sqlite extends \Phermion
 
 
 
-/*
 $application=new Sqlite();
-//$application->dropDatabase();
-$application->initialize();
+$application->autoExpose(true);
 echo $application->run();
-*/
+//*/
 
