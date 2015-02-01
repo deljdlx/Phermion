@@ -15,7 +15,7 @@ ini_set('display_errors', 'on');
  */
 
 //class NoSQL extends Sqlite
-class User extends \Phermion
+class UserStorage extends \Phermion
 {
 	public function action_create($login, $password, $email) {
 		$object=$this->add('user', json_encode(array(
@@ -35,7 +35,7 @@ class User extends \Phermion
 
 
 
-$application=new User();
+$application=new UserStorage();
 
 
 	$application->addServiceProvider('http://192.168.1.64/project/Phermion/phermion.storage.php');
