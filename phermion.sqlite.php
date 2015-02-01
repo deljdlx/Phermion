@@ -66,11 +66,13 @@ class Sqlite extends \Phermion
 
 	protected function initializeDatabase($repositoryName) {
 
+		if(!$repositoryName) {
+			return false;
+		}
 
 		$this->databaseFile=__DIR__.'/'.$repositoryName.'.sqlite';
 		$this->database=new \SQLite3($this->databaseFile);
-		return true;
-		//return $this->database;
+		return $repositoryName;
 	}
 
 

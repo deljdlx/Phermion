@@ -3,9 +3,9 @@
 namespace Phermion;
 
 
-//include(__DIR__.'/phermion.php');
+include(__DIR__.'/phermion.php');
 
-include(__DIR__.'/phermion.sqlite.php');
+//include(__DIR__.'/phermion.sqlite.php');
 
 ini_set('display_errors', 'on');
 
