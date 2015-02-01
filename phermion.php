@@ -794,7 +794,12 @@ class Phermion
 			$data=$this->httpQuery($provider.'?action='.$methodName, $this->requestMethod, $arguments);
 		}
 
-		return  json_decode($data, true);
+		if($object=json_decode($data, true)) {
+			return $object;
+		}
+		else {
+			return $data;
+		}
 	}
 
 /*</service_methods>*/
@@ -805,16 +810,6 @@ class Phermion
 /*<custom_code>*/
 
 
-
-
-/*
-$application=new Phermion();
-$application->addPackage(getCorePackage());
-$application->addAction("sayHello", function($who="John Doe") {
-	return "Hello ".$who."\n";
-});
-echo $application->run();
-*/
 
 
 /*</custom_code>*/

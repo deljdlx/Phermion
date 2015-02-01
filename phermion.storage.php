@@ -103,7 +103,10 @@ class Storage extends \Phermion
 
 
 	protected function addObject($type, $values) {
+
+
 		$now=$this->now();
+
 
 		$query="
 			INSERT INTO ".$this->entityTableName." (
@@ -163,10 +166,7 @@ class Storage extends \Phermion
 			WHERE entity.id=".$id.";
 		";
 
-
-
 		$data=$this->_queryAndFetch($query);
-
 
 		if(!empty($data)) {
 			$object = array(
@@ -279,14 +279,11 @@ class Storage extends \Phermion
 
 
 
-$application=new NoSQL();
-
-
-$application->addServiceProvider('http://192.168.1.64/project/Phermion/phermion.sqlite.php');
-
-$application->initialize('storage');
+$application=new Storage();
+	$application->autoExpose(true);
+	$application->addServiceProvider('http://192.168.1.64/project/Phermion/phermion.sqlite.php');
+	$application->initialize('storage');
 
 echo $application->run();
-
 exit();
 

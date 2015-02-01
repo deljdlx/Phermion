@@ -60,6 +60,11 @@ class Sqlite extends \Phermion
 		return $this->dropDatabase();
 	}
 
+	public function action_now() {
+
+		return $this->now();
+	}
+
 
 	//==============================================================
 	//==============================================================
